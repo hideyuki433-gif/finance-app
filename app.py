@@ -77,6 +77,16 @@ def load_jp_master() -> pd.DataFrame:
     return df
 
 
+@st.cache_data(show_spinner=False)
+def load_search_index() -> pd.DataFrame:
+    """正式名称に通称（ユニクロ→ファーストリテイリング等）を加えた検索用の表。name は常に正式名称。"""
+    master = load_jp_master()[["name", "code", "key"]]
+    aliases = pd.read_csv(DATA_DIR / "jp_aliases.csv", dtype={"code": str})
+    aliases["key"] = aliases["alias"].map(lambda s: unicodedata.normalize("NFKC", s).lower())
+    alias_rows = aliases[["code", "key"]].merge(master[["name", "code"]], on="code")
+    return pd.concat([master, alias_rows], ignore_index=True)
+
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def search_yahoo(query: str) -> list[dict]:
     """Yahoo Finance の銘柄検索（英語名・ローマ字・ティッカーに強い。日本語の会社名には非対応）。"""
@@ -94,7 +104,7 @@ def find_candidates(query: str) -> list[dict]:
     """入力文字列から候補銘柄（会社名・コード・ティッカー）のリストを返す。
 
     4桁の日本株コードや ".T" 付きシンボルはそのまま一意の候補として返す。
-    それ以外は、国内主要銘柄マスタでの会社名部分一致と、Yahoo Finance 検索
+    それ以外は、東証全銘柄マスタ＋通称表での部分一致と、Yahoo Finance 検索
     （英語名・ローマ字・海外ティッカー向け）の結果を統合する。
     """
     q = unicodedata.normalize("NFKC", query).strip()
@@ -115,7 +125,8 @@ def find_candidates(query: str) -> list[dict]:
     seen: set[str] = set()
 
     ql = q.lower()
-    hits = master[master["key"].str.contains(ql, regex=False)].copy()
+    index = load_search_index()
+    hits = index[index["key"].str.contains(ql, regex=False)].copy()
     hits["score"] = np.where(hits["key"] == ql, 3, np.where(hits["key"].str.startswith(ql), 2, 1))
     hits["name_len"] = hits["name"].str.len()
     hits = hits.sort_values(["score", "name_len"], ascending=[False, True])
@@ -302,6 +313,17 @@ def build_rsi_chart(df: pd.DataFrame) -> go.Figure:
     return fig
 
 
+def show_chart(fig: go.Figure) -> None:
+    # スマホでスワイプしただけで拡大縮小されないよう、ドラッグ操作によるズームを無効化する。
+    # 拡大したいときは右上のツールバーから意図的に操作できる。タップでの値表示は有効のまま。
+    fig.update_layout(dragmode=False)
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={"scrollZoom": False, "displaylogo": False, "modeBarButtonsToRemove": ["select2d", "lasso2d"]},
+    )
+
+
 # ---------------- UI ----------------
 
 st.title("📈 銘柄まるごとビューア")
@@ -404,15 +426,15 @@ chart_col, side_col = st.columns([3, 1.2])
 with chart_col:
     st.markdown("##### 株価チャート（ローソク足・移動平均線）")
     st.caption("日々の始値・高値・安値・終値と、25日／75日／200日移動平均線（過去株価をならした線）を表示します。")
-    st.plotly_chart(build_price_chart(df, f"{name} 株価チャート（{period_label}）"), use_container_width=True)
+    show_chart(build_price_chart(df, f"{name} 株価チャート（{period_label}）"))
 
     st.markdown("##### 出来高")
     st.caption("その日に売買が成立した株数です。株価の動きと出来高が一緒に増えているほど、値動きの信頼度が高いと見られます。")
-    st.plotly_chart(build_volume_chart(df), use_container_width=True)
+    show_chart(build_volume_chart(df))
 
     st.markdown("##### RSI（14日・買われすぎ／売られすぎの目安）")
     st.caption("直近14日間の値上がり・値下がりの比率から算出。70以上は買われすぎ、30以下は売られすぎの目安とされます（点線がその境界）。")
-    st.plotly_chart(build_rsi_chart(df), use_container_width=True)
+    show_chart(build_rsi_chart(df))
 
 with side_col:
     st.markdown("#### トレンド（参考情報）")
