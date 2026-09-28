@@ -1,0 +1,157 @@
+name,code,long_name
+トヨタ自動車,7203,Toyota Motor Corporation
+ソニーグループ,6758,Sony Group Corporation
+任天堂,7974,"Nintendo Co., Ltd."
+ソフトバンクグループ,9984,SoftBank Group Corp.
+ソフトバンク,9434,SoftBank Corp.
+三菱UFJフィナンシャル・グループ,8306,"Mitsubishi UFJ Financial Group, Inc."
+三井住友フィナンシャルグループ,8316,"Sumitomo Mitsui Financial Group, Inc."
+みずほフィナンシャルグループ,8411,"Mizuho Financial Group, Inc."
+楽天グループ,4755,"Rakuten Group, Inc."
+KDDI,9433,KDDI Corporation
+日本電信電話,9432,"NTT, Inc."
+ファーストリテイリング,9983,"Fast Retailing Co., Ltd."
+ニデック,6594,Nidec Corporation
+キーエンス,6861,Keyence Corporation
+村田製作所,6981,"Murata Manufacturing Co., Ltd."
+京セラ,6971,Kyocera Corporation
+パナソニックホールディングス,6752,Panasonic Holdings Corporation
+日立製作所,6501,"Hitachi, Ltd."
+三菱重工業,7011,"Mitsubishi Heavy Industries, Ltd."
+川崎重工業,7012,"Kawasaki Heavy Industries, Ltd."
+IHI,7013,IHI Corporation
+本田技研工業,7267,"Honda Motor Co., Ltd."
+日産自動車,7201,"Nissan Motor Co., Ltd."
+マツダ,7261,Mazda Motor Corporation
+スズキ,7269,Suzuki Motor Corporation
+SUBARU,7270,Subaru Corporation
+三菱自動車工業,7211,Mitsubishi Motors Corporation
+ブリヂストン,5108,Bridgestone Corporation
+日本製鉄,5401,Nippon Steel Corporation
+JFEホールディングス,5411,"JFE Holdings, Inc."
+神戸製鋼所,5406,"Kobe Steel, Ltd."
+東京エレクトロン,8035,Tokyo Electron Limited
+アドバンテスト,6857,Advantest Corporation
+ルネサスエレクトロニクス,6723,Renesas Electronics Corporation
+ディスコ,6146,Disco Corporation
+オリンパス,7733,Olympus Corporation
+キヤノン,7751,Canon Inc.
+ニコン,7731,Nikon Corporation
+富士フイルムホールディングス,4901,FUJIFILM Holdings Corporation
+リコー,7752,"Ricoh Company, Ltd."
+コニカミノルタ,4902,"Konica Minolta, Inc."
+セイコーエプソン,6724,Seiko Epson Corporation
+シャープ,6753,Sharp Corporation
+三菱電機,6503,Mitsubishi Electric Corporation
+富士通,6702,Fujitsu Limited
+NEC,6701,NEC Corporation
+沖電気工業,6703,"Oki Electric Industry Co., Ltd."
+ダイキン工業,6367,"Daikin Industries,Ltd."
+クボタ,6326,Kubota Corporation
+コマツ,6301,Komatsu Ltd.
+SMC,6273,SMC Corporation
+ファナック,6954,Fanuc Corporation
+オムロン,6645,OMRON Corporation
+AGC,5201,AGC Inc.
+住友化学,4005,"Sumitomo Chemical Company, Limited"
+三菱ケミカルグループ,4188,Mitsubishi Chemical Group Corporation
+旭化成,3407,Asahi Kasei Corporation
+東レ,3402,"Toray Industries, Inc."
+帝人,3401,Teijin Limited
+信越化学工業,4063,"Shin-Etsu Chemical Co., Ltd."
+花王,4452,Kao Corporation
+資生堂,4911,"Shiseido Company, Limited"
+ライオン,4912,Lion Corporation
+ユニ・チャーム,8113,Unicharm Corporation
+武田薬品工業,4502,Takeda Pharmaceutical Company Limited
+アステラス製薬,4503,Astellas Pharma Inc.
+第一三共,4568,"Daiichi Sankyo Company, Limited"
+中外製薬,4519,"Chugai Pharmaceutical Co., Ltd."
+エーザイ,4523,"Eisai Co., Ltd."
+大塚ホールディングス,4578,"Otsuka Holdings Co., Ltd."
+塩野義製薬,4507,"Shionogi & Co., Ltd."
+味の素,2802,"Ajinomoto Co., Inc."
+キリンホールディングス,2503,"Kirin Holdings Company, Limited"
+アサヒグループホールディングス,2502,"Asahi Group Holdings, Ltd."
+サッポロホールディングス,2501,Sapporo Breweries Limited
+サントリー食品インターナショナル,2587,Suntory Beverage & Food Limited
+日清食品ホールディングス,2897,"Nissin Foods Holdings Co.,Ltd."
+明治ホールディングス,2269,"Meiji Holdings Co., Ltd."
+カルビー,2229,"Calbee, Inc."
+山崎製パン,2212,"Yamazaki Baking Co., Ltd."
+セブン&アイ・ホールディングス,3382,"Seven & i Holdings Co., Ltd."
+イオン,8267,"Aeon Co., Ltd."
+良品計画,7453,"Ryohin Keikaku Co., Ltd."
+ニトリホールディングス,9843,"Nitori Holdings Co., Ltd."
+しまむら,8227,"SHIMAMURA Co., Ltd."
+丸井グループ,8252,"Marui Group Co., Ltd."
+高島屋,8233,"Takashimaya Company, Limited"
+三越伊勢丹ホールディングス,3099,Isetan Mitsukoshi Holdings Ltd.
+Jフロントリテイリング,3086,"J. Front Retailing Co., Ltd."
+ヤマダホールディングス,9831,"Yamada Holdings Co., Ltd."
+ビックカメラ,3048,Bic Camera Inc.
+東日本旅客鉄道,9020,East Japan Railway Company
+東海旅客鉄道,9022,Central Japan Railway Company
+西日本旅客鉄道,9021,West Japan Railway Company
+日本航空,9201,"Japan Airlines Co., Ltd."
+ANAホールディングス,9202,ANA Holdings Inc.
+東京電力ホールディングス,9501,"Tokyo Electric Power Company Holdings, Incorporated"
+関西電力,9503,"The Kansai Electric Power Company, Incorporated"
+中部電力,9502,"Chubu Electric Power Company, Incorporated"
+東京ガス,9531,"Tokyo Gas Co.,Ltd."
+大阪ガス,9532,"Osaka Gas Co., Ltd."
+三菱地所,8802,"Mitsubishi Estate Co., Ltd."
+三井不動産,8801,"Mitsui Fudosan Co., Ltd."
+住友不動産,8830,"Sumitomo Realty & Development Co., Ltd."
+東急不動産ホールディングス,3289,Tokyu Fudosan Holdings Corporation
+野村不動産ホールディングス,3231,"Nomura Real Estate Holdings, Inc."
+野村ホールディングス,8604,"Nomura Holdings, Inc."
+大和証券グループ本社,8601,Daiwa Securities Group Inc.
+SBIホールディングス,8473,"SBI Holdings, Inc."
+オリックス,8591,ORIX Corporation
+東京海上ホールディングス,8766,"Tokio Marine Holdings, Inc."
+MS&ADインシュアランスグループホールディングス,8725,"MS&AD Insurance Group Holdings, Inc."
+SOMPOホールディングス,8630,"Sompo Holdings, Inc."
+第一生命ホールディングス,8750,"Daiichi Life Group, Inc."
+かんぽ生命保険,7181,"Japan Post Insurance Co., Ltd."
+日本郵政,6178,"Japan Post Holdings Co., Ltd."
+ゆうちょ銀行,7182,"JAPAN POST BANK Co., Ltd."
+りそなホールディングス,8308,"Resona Holdings, Inc."
+コンコルディア・フィナンシャルグループ,7186,"Yokohama Financial Group, Inc."
+三井住友トラスト・ホールディングス,8309,"Sumitomo Mitsui Trust Group, Inc."
+セブン銀行,8410,"Seven Bank, Ltd."
+GMOインターネットグループ,9449,"GMO internet group, Inc."
+LINEヤフー,4689,LY Corporation
+ディー・エヌ・エー,2432,"DeNA Co., Ltd."
+サイバーエージェント,4751,"CyberAgent, Inc."
+MIXI,2121,"MIXI, Inc."
+グリー,3632,"GREE Holdings, Inc."
+コロプラ,3668,"COLOPL, Inc."
+スクウェア・エニックス・ホールディングス,9684,"Square Enix Holdings Co., Ltd."
+バンダイナムコホールディングス,7832,BANDAI NAMCO Holdings Inc.
+セガサミーホールディングス,6460,Sega Sammy Holdings Inc.
+コナミグループ,9766,Konami Group Corporation
+カプコン,9697,"Capcom Co., Ltd."
+電通グループ,4324,Dentsu Group Inc.
+博報堂DYホールディングス,2433,Hakuhodo DY Holdings Inc
+リクルートホールディングス,6098,"Recruit Holdings Co., Ltd."
+パーソルホールディングス,2181,"Persol Holdings Co.,Ltd."
+ヤマトホールディングス,9064,"Yamato Holdings Co., Ltd."
+日本郵船,9101,Nippon Yusen Kabushiki Kaisha
+商船三井,9104,"Mitsui O.S.K. Lines, Ltd."
+川崎汽船,9107,"Kawasaki Kisen Kaisha, Ltd."
+オリエンタルランド,4661,"Oriental Land Co., Ltd."
+大塚商会,4768,Otsuka Corporation
+野村総合研究所,4307,"Nomura Research Institute, Ltd."
+伊藤忠商事,8001,ITOCHU Corporation
+三菱商事,8058,Mitsubishi Corporation
+三井物産,8031,"Mitsui & Co., Ltd."
+住友商事,8053,Sumitomo Corporation
+丸紅,8002,Marubeni Corporation
+双日,2768,Sojitz Corporation
+メルカリ,4385,"Mercari, Inc."
+freee,4478,freee K.K.
+マネーフォワード,3994,"Money Forward, Inc."
+Sansan,4443,"Sansan, Inc."
+クラウドワークス,3900,CrowdWorks Inc.
+ラクス,3923,"Rakus Co., Ltd."
