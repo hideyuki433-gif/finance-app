@@ -122,7 +122,7 @@ def find_candidates(query: str) -> list[dict]:
         if symbol in seen:
             continue
         seen.add(symbol)
-        candidates.append({"label": f"{name}（{code}）", "symbol": symbol, "is_jp": True})
+        candidates.append({"label": f"{name}（{code}）", "symbol": symbol, "is_jp": True, "name": name})
 
     if _has_ascii_alnum(q):
         yahoo_candidates = []
@@ -140,6 +140,7 @@ def find_candidates(query: str) -> list[dict]:
                     "label": f"{disp_name}（{symbol}・{exch}）" if exch else f"{disp_name}（{symbol}）",
                     "symbol": symbol,
                     "is_jp": symbol.endswith(".T"),
+                    "name": disp_name,
                 }
             )
         # 同一企業が複数市場に上場している場合、日本のユーザー向けに東証（.T）を優先表示する
@@ -316,14 +317,17 @@ with st.sidebar:
     symbol = None
     is_jp = False
     no_match = False
+    candidate_name = None
 
     if len(candidates) == 1:
         symbol, is_jp = candidates[0]["symbol"], candidates[0]["is_jp"]
+        candidate_name = candidates[0].get("name")
     elif len(candidates) > 1:
         labels = [c["label"] for c in candidates]
         chosen_label = st.selectbox("候補から選択", labels, index=0)
         chosen = candidates[labels.index(chosen_label)]
         symbol, is_jp = chosen["symbol"], chosen["is_jp"]
+        candidate_name = chosen.get("name")
     elif q_norm and re.fullmatch(r"[A-Za-z0-9.\-^=]+", q_norm):
         # ティッカー／コードらしき文字列のみ、そのままシンボルとして試す
         symbol, is_jp = normalize_symbol(q_norm)
@@ -364,7 +368,7 @@ prev = df.iloc[-2] if len(df) > 1 else last
 change = last["Close"] - prev["Close"]
 change_pct = (change / prev["Close"] * 100) if prev["Close"] else np.nan
 
-name = info.get("longName") or info.get("shortName") or symbol
+name = info.get("longName") or info.get("shortName") or candidate_name or symbol
 currency = info.get("currency", "")
 
 # ---- ヘッダー: 銘柄名・現在値 ----
