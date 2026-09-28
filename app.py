@@ -393,8 +393,16 @@ st.markdown("---")
 chart_col, side_col = st.columns([3, 1.2])
 
 with chart_col:
+    st.markdown("##### 株価チャート（ローソク足・移動平均線）")
+    st.caption("日々の始値・高値・安値・終値と、25日／75日／200日移動平均線（過去株価をならした線）を表示します。")
     st.plotly_chart(build_price_chart(df, f"{name} 株価チャート（{period_label}）"), use_container_width=True)
+
+    st.markdown("##### 出来高")
+    st.caption("その日に売買が成立した株数です。株価の動きと出来高が一緒に増えているほど、値動きの信頼度が高いと見られます。")
     st.plotly_chart(build_volume_chart(df), use_container_width=True)
+
+    st.markdown("##### RSI（14日・買われすぎ／売られすぎの目安）")
+    st.caption("直近14日間の値上がり・値下がりの比率から算出。70以上は買われすぎ、30以下は売られすぎの目安とされます（点線がその境界）。")
     st.plotly_chart(build_rsi_chart(df), use_container_width=True)
 
 with side_col:
