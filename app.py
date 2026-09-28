@@ -1,7 +1,8 @@
 import re
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -42,16 +43,19 @@ def check_password() -> bool:
 if not check_password():
     st.stop()
 
-PERIOD_OPTIONS = {
-    "1ヶ月": "1mo",
-    "3ヶ月": "3mo",
-    "6ヶ月": "6mo",
-    "1年": "1y",
-    "3年": "3y",
-    "5年": "5y",
+PERIOD_DAYS = {
+    "1ヶ月": 31,
+    "3ヶ月": 92,
+    "6ヶ月": 183,
+    "1年": 365,
+    "3年": 1096,
+    "5年": 1827,
 }
+# 200日移動平均（約290暦日）とRSIの平滑化が表示期間の先頭から安定するよう、余分に取得する日数
+WARMUP_DAYS = 420
 
-JP_CODE_RE = re.compile(r"^\d{4}[A-Z0-9]?$")  # 4桁数字（英数字1桁付与銘柄にも対応）
+# 証券コード: 4桁数字、または新形式（2・4桁目に英字、例: 130A）
+JP_CODE_RE = re.compile(r"^\d[0-9A-Z]\d[0-9A-Z]$")
 
 
 def normalize_symbol(raw: str) -> tuple[str, bool]:
@@ -68,7 +72,9 @@ def normalize_symbol(raw: str) -> tuple[str, bool]:
 
 @st.cache_data(show_spinner=False)
 def load_jp_master() -> pd.DataFrame:
-    return pd.read_csv(DATA_DIR / "jp_company_master.csv")
+    df = pd.read_csv(DATA_DIR / "jp_company_master.csv", dtype={"code": str})
+    df["key"] = df["name"].map(lambda s: unicodedata.normalize("NFKC", s).lower())
+    return df
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -95,29 +101,25 @@ def find_candidates(query: str) -> list[dict]:
     if not q:
         return []
 
+    master = load_jp_master()
+
     direct_symbol, direct_is_jp = normalize_symbol(q)
     if direct_is_jp:
-        return [{"label": direct_symbol, "symbol": direct_symbol, "is_jp": True}]
+        code = direct_symbol.removesuffix(".T")
+        hit = master.loc[master["code"] == code, "name"]
+        name = hit.iloc[0] if not hit.empty else None
+        label = f"{name}（{code}）" if name else direct_symbol
+        return [{"label": label, "symbol": direct_symbol, "is_jp": True, "name": name}]
 
     candidates: list[dict] = []
     seen: set[str] = set()
 
-    master = load_jp_master()
     ql = q.lower()
-    scored = []
-    for _, row in master.iterrows():
-        name_l = unicodedata.normalize("NFKC", str(row["name"])).lower()
-        if name_l == ql:
-            score = 3
-        elif name_l.startswith(ql):
-            score = 2
-        elif ql in name_l:
-            score = 1
-        else:
-            continue
-        scored.append((score, row["name"], str(row["code"])))
-    scored.sort(key=lambda x: (-x[0], len(x[1])))
-    for _, name, code in scored:
+    hits = master[master["key"].str.contains(ql, regex=False)].copy()
+    hits["score"] = np.where(hits["key"] == ql, 3, np.where(hits["key"].str.startswith(ql), 2, 1))
+    hits["name_len"] = hits["name"].str.len()
+    hits = hits.sort_values(["score", "name_len"], ascending=[False, True])
+    for name, code in zip(hits["name"], hits["code"]):
         symbol = f"{code}.T"
         if symbol in seen:
             continue
@@ -148,13 +150,13 @@ def find_candidates(query: str) -> list[dict]:
         yahoo_candidates.sort(key=lambda c: 0 if c["is_jp"] else 1)
         candidates.extend(yahoo_candidates)
 
-    return candidates[:8]
+    return candidates[:10]
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-def load_history(symbol: str, period: str) -> pd.DataFrame:
-    df = yf.Ticker(symbol).history(period=period, auto_adjust=False)
-    return df
+def load_history(symbol: str, days: int) -> pd.DataFrame:
+    start = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+    return yf.Ticker(symbol).history(start=start, auto_adjust=False)
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
@@ -180,13 +182,14 @@ def calc_indicators(df: pd.DataFrame) -> pd.DataFrame:
     out["SMA75"] = out["Close"].rolling(75).mean()
     out["SMA200"] = out["Close"].rolling(200).mean()
 
+    # RSI はワイルダー方式（証券会社アプリや TradingView と同じ平滑化）
     delta = out["Close"].diff()
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
-    avg_gain = gain.rolling(14).mean()
-    avg_loss = loss.rolling(14).mean()
-    rs = avg_gain / avg_loss.replace(0, np.nan)
-    out["RSI14"] = 100 - (100 / (1 + rs))
+    avg_gain = gain.ewm(alpha=1 / 14, min_periods=14, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1 / 14, min_periods=14, adjust=False).mean()
+    rsi = 100 - 100 / (1 + avg_gain / avg_loss)
+    out["RSI14"] = rsi.where(avg_loss != 0, 100.0)
     return out
 
 
@@ -272,7 +275,7 @@ def build_price_chart(df: pd.DataFrame, title: str) -> go.Figure:
     )
     for col, color in (("SMA25", "#f0a500"), ("SMA75", "#7a5cf0"), ("SMA200", "#2ca02c")):
         if col in df and df[col].notna().any():
-            fig.add_trace(go.Scatter(x=df.index, y=df[col], name=col, line=dict(width=1.3, color=color)))
+            fig.add_trace(go.Scatter(x=df.index, y=df[col], name=col, mode="lines", line=dict(width=1.3, color=color)))
 
     fig.update_layout(
         title=title,
@@ -292,7 +295,7 @@ def build_volume_chart(df: pd.DataFrame) -> go.Figure:
 
 
 def build_rsi_chart(df: pd.DataFrame) -> go.Figure:
-    fig = go.Figure(go.Scatter(x=df.index, y=df["RSI14"], name="RSI(14)", line=dict(color="#8844cc")))
+    fig = go.Figure(go.Scatter(x=df.index, y=df["RSI14"], name="RSI(14)", mode="lines", line=dict(color="#8844cc")))
     fig.add_hline(y=70, line_dash="dot", line_color="gray")
     fig.add_hline(y=30, line_dash="dot", line_color="gray")
     fig.update_layout(height=180, margin=dict(l=10, r=10, t=10, b=10), yaxis_range=[0, 100])
@@ -302,47 +305,45 @@ def build_rsi_chart(df: pd.DataFrame) -> go.Figure:
 # ---------------- UI ----------------
 
 st.title("📈 銘柄まるごとビューア")
-st.caption("日本株・米国株の銘柄コード／ティッカーを入力すると、株価チャート・テクニカル指標・優待/四季報リンクを1画面で確認できます。")
+st.caption("日本株・米国株の銘柄名・コード・ティッカーを入力すると、株価チャート・テクニカル指標・優待/四季報リンクを1画面で確認できます。")
 
-with st.sidebar:
-    st.header("検索条件")
+# スマホではサイドバーが畳まれて見つけにくいため、検索欄はメインエリア上部に置く
+search_col, pick_col, period_col = st.columns([2, 2, 1])
+with search_col:
     raw_input = st.text_input(
         "銘柄名・コード・ティッカーで検索",
         value="トヨタ自動車",
         placeholder="例: トヨタ自動車 / Toyota / 7203 / AAPL",
     )
 
-    q_norm = unicodedata.normalize("NFKC", raw_input).strip()
-    candidates = find_candidates(raw_input)
-    symbol = None
-    is_jp = False
-    no_match = False
-    candidate_name = None
+q_norm = unicodedata.normalize("NFKC", raw_input).strip()
+candidates = find_candidates(raw_input)
+symbol = None
+is_jp = False
+no_match = False
+candidate_name = None
 
-    if len(candidates) == 1:
-        symbol, is_jp = candidates[0]["symbol"], candidates[0]["is_jp"]
-        candidate_name = candidates[0].get("name")
-    elif len(candidates) > 1:
-        labels = [c["label"] for c in candidates]
-        chosen_label = st.selectbox("候補から選択", labels, index=0)
-        chosen = candidates[labels.index(chosen_label)]
-        symbol, is_jp = chosen["symbol"], chosen["is_jp"]
-        candidate_name = chosen.get("name")
-    elif q_norm and re.fullmatch(r"[A-Za-z0-9.\-^=]+", q_norm):
-        # ティッカー／コードらしき文字列のみ、そのままシンボルとして試す
-        symbol, is_jp = normalize_symbol(q_norm)
-    elif q_norm:
-        no_match = True
+if len(candidates) == 1:
+    symbol, is_jp = candidates[0]["symbol"], candidates[0]["is_jp"]
+    candidate_name = candidates[0].get("name")
+elif len(candidates) > 1:
+    labels = [c["label"] for c in candidates]
+    with pick_col:
+        chosen_label = st.selectbox(f"候補から選択（{len(candidates)}件）", labels, index=0)
+    chosen = candidates[labels.index(chosen_label)]
+    symbol, is_jp = chosen["symbol"], chosen["is_jp"]
+    candidate_name = chosen.get("name")
+elif q_norm and re.fullmatch(r"[A-Za-z0-9.\-^=]+", q_norm):
+    # ティッカー／コードらしき文字列のみ、そのままシンボルとして試す
+    symbol, is_jp = normalize_symbol(q_norm)
+elif q_norm:
+    no_match = True
 
-    period_label = st.selectbox("表示期間", list(PERIOD_OPTIONS.keys()), index=3)
-    st.markdown("---")
-    st.caption(
-        "※ 本アプリの株価予測・トレンド表示は移動平均線やRSIなど過去データに基づく参考情報であり、"
-        "投資助言ではありません。投資判断はご自身の責任で行ってください。"
-    )
+with period_col:
+    period_label = st.selectbox("表示期間", list(PERIOD_DAYS.keys()), index=3)
 
 if not raw_input.strip():
-    st.info("左のサイドバーに銘柄名・コード・ティッカーを入力してください。")
+    st.info("銘柄名・コード・ティッカーを入力してください。")
     st.stop()
 
 if no_match or not symbol:
@@ -352,17 +353,25 @@ if no_match or not symbol:
     )
     st.stop()
 
-period = PERIOD_OPTIONS[period_label]
+period_days = PERIOD_DAYS[period_label]
 
 with st.spinner(f"{symbol} のデータを取得中..."):
-    history = load_history(symbol, period)
+    try:
+        history = load_history(symbol, period_days + WARMUP_DAYS)
+    except Exception:
+        history = pd.DataFrame()
     info = load_info(symbol)
 
 if history.empty:
-    st.error(f"「{raw_input}」のデータが取得できませんでした。銘柄コード／ティッカーを確認してください。")
+    st.error(
+        f"「{raw_input}」のデータが取得できませんでした。銘柄コード／ティッカーを確認するか、"
+        "データ提供元の混雑の可能性もあるため、時間をおいて再度お試しください。"
+    )
     st.stop()
 
-df = calc_indicators(history)
+# 指標は余分に取得したデータ全体で計算し、表示は選択期間に絞る
+full = calc_indicators(history)
+df = full[full.index >= full.index[-1] - timedelta(days=period_days)]
 last = df.iloc[-1]
 prev = df.iloc[-2] if len(df) > 1 else last
 change = last["Close"] - prev["Close"]
@@ -407,7 +416,7 @@ with chart_col:
 
 with side_col:
     st.markdown("#### トレンド（参考情報）")
-    label, reason = trend_judgement(df)
+    label, reason = trend_judgement(full)
     st.info(f"**{label}**\n\n{reason}")
     st.caption(f"RSI(14): {rsi_comment(last['RSI14'])}")
 
@@ -431,6 +440,10 @@ with side_col:
 
 st.markdown("---")
 st.caption(
-    f"データ取得: Yahoo Finance (yfinance) / 取得時刻: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} "
-    "/ 表示内容は投資助言ではありません。"
+    "※ 本アプリのトレンド表示は移動平均線やRSIなど過去データに基づく参考情報であり、"
+    "投資助言ではありません。投資判断はご自身の責任で行ってください。"
+)
+st.caption(
+    f"データ取得: Yahoo Finance (yfinance) / "
+    f"表示時刻: {datetime.now(ZoneInfo('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')}（日本時間）"
 )
